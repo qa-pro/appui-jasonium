@@ -1,3 +1,130 @@
+# AppUI Automated Testing Platform — Installation Guide
+
+## Environment Requirements
+
+| Dependency | Minimum Version | Purpose |
+|------------|----------------|---------|
+| Java | 17+ | Run `appui-platform-1.0.0.jar` |
+| Node.js | 18+ | `npx vite preview` to serve the frontend |
+| MySQL | 8.0+ | Primary database |
+| MinIO | Latest stable | Screenshot / object storage |
+
+## Directory Structure
+
+```
+.
+├── appui-platform-1.0.0.jar   # Java backend service
+├── autoglm-service             # AutoGLM AI service (macOS binary)
+├── start-all.sh                # One-click startup script
+├── config/
+│   ├── env.properties.example  # Configuration template
+│   └── app_packages.json       # Tested app package name mapping
+└── dist/                       # Pre-built frontend static assets
+```
+
+## Step 1: Configure Environment Variables
+
+```bash
+cd config
+cp env.properties.example env.properties
+```
+
+Edit `config/env.properties` and fill in the required fields:
+
+### MySQL (required)
+
+```properties
+spring.datasource.url=jdbc:mysql://localhost:3306/appui?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
+spring.datasource.username=<your_username>
+spring.datasource.password=<your_password>
+```
+
+Create the database in advance:
+
+```sql
+CREATE DATABASE appui DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+```
+
+### Mobile MCP Engine (required, for AI-driven automated testing)
+
+```properties
+mobile-mcp.model-base-url=https://api.anthropic.com
+mobile-mcp.model-api-key=<your_anthropic_api_key>
+mobile-mcp.model-name=claude-opus-4-5
+mobile-mcp.model-provider=anthropic/openai_compatible
+```
+
+### JWT (required)
+
+```properties
+# Generate with: openssl rand -base64 48
+jwt.secret=<value_generated_by_the_command_above>
+jwt.expiration=86400000
+```
+
+### AutoGLM Service (required, AI model invocation)
+
+```properties
+# Address for Java backend to call autoglm-service
+autoglm.service-url=http://localhost:8400
+
+# Model configuration read by the autoglm-service process
+autoglm.model-base-url=http://model.autoglm.ai.srv/v1
+autoglm.model-api-key=<your_api_key>
+autoglm.model-name=autoglm-phone-9b
+```
+
+## Step 2: Configure Tested App Package Names (optional)
+
+Edit `config/app_packages.json` to add or remove target applications:
+
+```json
+{
+  "My Test App": "com.example.myapp",
+  "Alipay": "com.eg.android.AlipayGphone",
+  "WeChat": "com.tencent.mm.override"
+}
+```
+
+## Step 3: One-Click Startup
+
+macOS and Linux:
+```bash
+chmod +x start-all.sh
+./start-all.sh
+```
+
+Windows:
+```bash
+Double-click start-all.bat
+```
+
+The script starts the following services in order:
+
+| # | Service | Default Port |
+|---|---------|-------------|
+| 1/3 | Java backend (`appui-platform-1.0.0.jar`) | 8080 |
+| 2/3 | Frontend (`npx vite preview`) | 4173 |
+| 3/3 | AutoGLM service (`autoglm-service`) | 8400 |
+
+After startup, open **http://localhost:4173** to access the platform.
+
+Press `Ctrl+C` to stop all services.
+
+## Important Notes
+
+1. **Config file location**: `env.properties` must be placed in the `config/` directory (the `config/` subdirectory alongside the JAR). It takes precedence over the `application.yml` embedded in the JAR.
+2. **autoglm-service platform limitation**: The current `autoglm-service` is a macOS (arm64) compiled binary. For Linux environments, replace it with the corresponding platform version.
+3. **First startup**: The JAR automatically creates database tables — no manual DDL execution is required.
+4. **Port conflicts**: If ports 8080/4173/8400 are already in use, free them or modify the corresponding service configuration.
+5. **Pre-built frontend**: The `dist/` directory contains packaged static assets. No `npm install` is needed — it is served directly via `npx vite preview` (make sure `vite` is installed globally, or npx will download it automatically).
+6. **Cross-machine deployment**: If the Java backend and AutoGLM service are deployed on different machines, change `autoglm.service-url` to the actual IP address of the AutoGLM service.
+7. **API Key security**: `env.properties` contains sensitive credentials — never commit it to version control.
+
+
+----------------------------------------------------------------------------------------------------------------------------------
+
+
 # AppUI 自动化测试平台 — 安装指南
 
 ## 环境要求
