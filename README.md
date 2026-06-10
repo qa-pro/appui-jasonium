@@ -1,3 +1,311 @@
+# AppUI Automated Testing Platform & Agent Skill · User Handbook
+
+> This handbook is for testers using the platform day-to-day, covering everything from first login to completing a full test execution cycle.
+
+---
+
+## 1. Environment Requirements
+
+| Role | Requirement | Details |
+|------|-------------|---------|
+| All users | Modern browser (Chrome / Edge / Firefox) | Web-based platform, no local installation needed |
+| Flow test execution | Appium Server running | Run `appium server --port 4723 --address 127.0.0.1` on the deployment machine; flow tests rely on Appium to drive device operations |
+| Local device connection | USB cable + USB debugging enabled | Android devices require Developer Options > USB Debugging |
+| iOS device | macOS + Xcode Command Line Tools | WebDriverAgent signing must be completed |
+| HarmonyOS device | Huawei HDC tool | Developer mode must be enabled on device |
+| AI-powered testing | Valid Anthropic API Key or OpenAI Compatible API | Configure in the LLM Settings page |
+
+---
+
+## 2. Account & Login
+
+1. Open the platform URL to reach the login page
+2. **Register**: Click the "Register" tab, fill in username and password; you are logged in automatically after registration
+3. **Log in**: Enter your registered username and password
+4. **Change password**: Go to "User Center" after logging in
+5. Login sessions last 24 hours by default; re-login is required after expiration
+
+---
+
+## 3. Page Navigation
+
+After logging in, the left sidebar provides access to all features:
+
+| Page | Path | Purpose |
+|------|------|---------|
+| Flow Editor | `/flow` | Visual drag-and-drop test flow creation and editing (default landing page) |
+| Device Manager | `/device` | Scan, connect, manage, and monitor test devices |
+| Scenario Recorder | `/recorder` | Record real-device operations and auto-generate test flows |
+| Execution Monitor | `/execution` | View flow execution status, real-time logs, and screenshots |
+| AI Tasks | `/autoglm` | Create and manage natural-language-driven AI test tasks |
+| Scheduled Tasks | `/scheduled-tasks` | Configure automated execution of flow and AI tasks on a schedule |
+| Test Reports | `/report` | View execution statistics and test reports |
+| LLM Settings | `/settings/llm` | Configure AI engine parameters (API Key, model, etc.) |
+| Database Settings | `/settings/database` | Switch database connections at runtime |
+| User Center | `/user-center` | Change password and manage personal info |
+
+---
+
+## 4. Core Workflows
+
+### 4.1 Connect a Device
+
+1. Go to "Device Manager"
+2. **Wired connection**: Connect the device via USB, click "Scan Devices"
+3. **WiFi connection**: Click "WiFi Connect", enter the device IP and port (Android 11+ supports pairing code)
+4. Once the device is online, click "Lease" to claim it; click "Release" when done
+5. Supports device renaming, live screen preview, and UI element hierarchy inspection
+
+### 4.2 Create a Flow Test Case
+
+1. Go to "Flow Editor" (default landing page)
+2. Drag step nodes from the left panel onto the canvas:
+   - **Launch App** → specify app package name
+   - **Tap / Input / Swipe** → specify element locator info
+   - **Wait / Wait for Element** → set wait conditions
+   - **Assert** → verify element existence or attribute values
+   - **Terminate App** → close the app
+3. Connect nodes to form a complete test flow
+4. Click "Save" to name and store the flow
+
+### 4.3 Record a Scenario
+
+1. First connect and lease a device in "Device Manager"
+2. Go to "Scenario Recorder", select the target device
+3. Click "Start Recording" and perform operations on the device
+4. The platform automatically captures taps, swipes, inputs, and app launches
+5. Click "Stop Recording" when done; a reusable test flow is generated automatically
+6. Fine-tune the recorded flow in the Flow Editor
+
+### 4.4 Execute Tests
+
+**Flow execution:**
+1. **Ensure Appium Server is running** (run `appium server --port 4723 --address 127.0.0.1` on the deployment machine)
+2. Ensure the target device is connected and leased
+3. In "Flow Editor", select a flow and click "Execute"
+4. Switch to "Execution Monitor" to view real-time progress, logs, and auto-captured screenshots
+5. Supports stopping execution mid-way
+
+**AI-powered testing:**
+1. Go to "AI Tasks"
+2. Describe your test intent in natural language (e.g., "Open Settings, check if Bluetooth is off by default")
+3. Select the engine: Mobile MCP or OpenAutoGLM
+4. Click Execute, then go to the AI execution monitor to watch step-by-step operations
+
+### 4.5 Scheduled Tasks
+
+1. Go to "Scheduled Tasks"
+2. Click "New Task", choose type (Flow Task / AI Task)
+3. Configure a Cron expression for execution time
+4. Specify target device and flow/test case
+5. Save; the task runs automatically on schedule
+6. Supports immediate execution, enable/disable, and batch creation (AI tasks)
+
+### 4.6 View Reports
+
+1. Go to "Test Reports"
+2. Filter by time range, device, flow, etc.
+3. View pass rate statistics and execution trends
+4. Click any execution to review per-step screenshots and detailed logs
+
+---
+
+## 5. AI Configuration
+
+Before using AI-powered testing, configure the engine in "LLM Settings":
+
+### Mobile MCP Engine (Recommended)
+
+| Setting | Description |
+|---------|-------------|
+| Model Provider | Select `anthropic` or `openai_compatible` |
+| Model Base URL | API endpoint (Anthropic official or compatible) |
+| Model API Key | API key |
+| Model Name | Model identifier, e.g. `claude-opus-4-5` |
+
+### OpenAutoGLM Engine
+
+| Setting | Description |
+|---------|-------------|
+| Service URL | AutoGLM service address, default `http://localhost:8400` |
+| Model Base URL | Model inference service address |
+| Model API Key | Model API key |
+| Model Name | Model identifier, default `autoglm-phone-9b` |
+
+> After configuration, click "Test Connection" to verify connectivity.
+
+---
+
+## 6. Important Notes
+
+### Devices
+
+- Ensure the device screen is unlocked and not in sleep mode before executing tests
+- Devices left idle for a long time may enter sleep mode, causing execution timeouts
+- For unstable WiFi connections, switch to wired (USB) connection
+- A device can only be leased by one user at a time
+- Other users cannot lease a device until it is released
+
+### Flow Test Cases
+
+- Place the "Launch App" step at the beginning of the flow
+- Add "Wait for Element" steps after key operations to avoid failures due to pages not fully loading
+- Use Assert steps to verify expected results; add them at critical checkpoints
+- Flows support multiple rounds of editing and iteration
+
+### AI Testing
+
+- AI testing depends on LLM inference and typically takes longer than flow-based testing
+- More specific and detailed test intent descriptions yield higher AI accuracy
+- Start with simple scenarios to verify AI connectivity before running complex tests
+- Real-time step-by-step operation logs are available during AI execution
+
+### Scheduled Tasks
+
+- Cron expression format: `second minute hour day month weekday` (e.g., `0 0 9 * * ?` for daily at 9 AM)
+- Ensure the target device is online and idle when scheduled tasks trigger
+- Execution failure details and error info are available in task history
+
+### Network & Services
+
+- Ensure your browser can access the platform URL
+- The Execution Monitor uses WebSocket for real-time updates; refresh the page if connection drops
+- If the page is unresponsive for an extended period, check that the backend service is running
+
+---
+
+## 7. Quick Troubleshooting
+
+| Problem | Solution |
+|---------|----------|
+| Device not found | Check USB cable, ensure USB debugging is enabled, run `adb devices` to verify |
+| Flow execution stuck | Check if device is locked or sleeping, review execution logs to locate the failing step |
+| AI task unresponsive | Verify API Key in "LLM Settings", click "Test Connection" to check |
+| Screenshots not loading | Check if MinIO service is running, verify bucket configuration |
+| WebSocket disconnected | Refresh the page to reconnect, check network stability |
+| Scheduled task not triggered | Confirm task status is "Enabled", verify Cron expression is correct |
+| Blank page | Clear browser cache, confirm frontend (port 3000) and backend (port 8030) services are running |
+
+---
+
+## 8. AI-Driven Testing (appui-test Skill)
+
+The platform supports driving tests entirely through the `appui-test` skill in Claude Code — no manual Web UI interaction needed. Just describe your intent and the skill handles everything from device leasing to result reporting.
+
+### How to Invoke
+
+Use the `/appui-test` command in Claude Code followed by your test description:
+
+```
+# Create a new AI test case (default mode)
+/appui-test Open WeChat, search for contact "John", verify search results
+
+# Re-run an existing test case (ai: or 用例: prefix)
+/appui-test ai: WeChat contact search test
+/appui-test 用例: #42
+
+# Execute an existing flow (flow: or 流程: prefix)
+/appui-test flow: Login regression test
+/appui-test 流程: Payment flow
+
+# Scheduled task management (定时: or schedule: prefix)
+/appui-test 定时: List all scheduled tasks
+```
+
+### Workflow
+
+The skill automatically completes three phases with no manual intervention:
+
+```
+┌─────────────────────────────────────────┐
+│ PHASE 1: SETUP                          │
+│   Login → Scan devices → Lease device   │
+├─────────────────────────────────────────┤
+│ PHASE 2: TEST                           │
+│   Create task → Poll status → Get result│
+├─────────────────────────────────────────┤
+│ PHASE 3: TEARDOWN                       │
+│   Release device → Summary report       │
+└─────────────────────────────────────────┘
+```
+
+### AI Engine Selection
+
+| Engine | Characteristics | Use Case |
+|--------|----------------|----------|
+| Mobile MCP (recommended) | Claude/OpenAI API, auto-executes after creation | Complex scenarios, intelligent decision-making |
+| OpenAutoGLM | AutoGLM vision model, requires manual trigger | Lightweight validation, visual understanding |
+
+Specify an engine:
+```
+/appui-test engine: autoglm, open settings and check Bluetooth status
+```
+
+### Batch & Parallel Execution
+
+**Batch serial** — run multiple test cases sequentially on the same device:
+```
+/appui-test
+1. Open WeChat, verify homepage loads
+2. Open Alipay, verify homepage loads
+3. Open Douyin, verify recommendation feed loads
+```
+
+**Multi-device parallel** — different devices execute different cases simultaneously:
+```
+/appui-test parallel execution:
+device Pixel 7:
+1. Open WeChat, verify homepage loads
+2. Search for contact "John"
+device Galaxy S24:
+1. Open Alipay, verify homepage loads
+2. Verify QR code scanning
+```
+
+### Credential Configuration
+
+The skill needs platform login credentials, resolved in this priority order:
+
+1. **Explicit pass-in**: `/appui-test account: admin/123456, open WeChat`
+2. **Environment variables**: Set `APPUI_USERNAME` and `APPUI_PASSWORD`
+3. **Interactive prompt**: If neither is available, the skill prompts for input
+
+The platform URL is configured via the `APPUI_API_BASE` environment variable, defaulting to `http://localhost:8030`.
+
+### Important Notes
+
+- **Devices must be leased first**: The skill handles this automatically, but devices must be online and available
+- **Flow cases must be created in the UI**: The skill cannot replace visual drag-and-drop editing; create flows in FlowEditor first, then execute via the skill
+- **Re-running clears history**: `ai:` re-execution clears all previous steps and screenshots and starts from scratch
+- **Execution timeout**: AI tasks running longer than 10 minutes will prompt for manual stop
+- **Early assertion failure**: Automatically stops after 3 consecutive verification failures to avoid pointless waiting
+- **Credential safety**: The skill never outputs tokens, passwords, or other credentials in conversation; personal info in screenshots is redacted
+
+### Result Interpretation
+
+| Status | Meaning |
+|--------|---------|
+| ✅ COMPLETED / SUCCESS | Test passed |
+| ❌ FAILED | Test failed; check error message and screenshots for root cause |
+| ⏹️ STOPPED | Manually terminated |
+| ⚠️ COMPLETED but result empty or contains "failed" | Review step details for confirmation |
+
+---
+
+## 9. Browser Compatibility
+
+The following browsers (latest version) are recommended:
+
+- Google Chrome (recommended)
+- Microsoft Edge
+- Mozilla Firefox
+
+> Internet Explorer is not supported.
+
+
+----------------------------------------------------------------------------------------------------------------------
+
+
 # AppUI 自动化测试平台 & Agent Skill · 使用手册
 
 > 本文档面向日常使用平台的测试人员，覆盖从首次登录到完成一轮测试执行的完整流程。
